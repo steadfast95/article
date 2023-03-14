@@ -1,0 +1,446 @@
+openapi: 3.0.4
+info:
+  title: Article
+  description: Сервис для шаринга текстовой информации(статьи)
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/v1
+tags:
+  - name: article
+    description: Статья
+  - name: comment
+    description: Комментарий к статье
+
+paths:
+  /article/create:
+    post:
+      tags:
+        - article
+      operationId: articleCreate
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleCreateRequest'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleCreateResponse'
+
+  /article/read:
+    post:
+      tags:
+        - article
+      operationId: articleRead
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleReadRequest'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleReadResponse'
+
+  /article/update:
+    post:
+      tags:
+        - article
+      operationId: articleUpdate
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleUpdateRequest'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleUpdateResponse'
+
+  /article/block:
+    post:
+      tags:
+        - article
+      operationId: articleBlock
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleBlockRequest'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleBlockResponse'
+
+  /article/search:
+    post:
+      tags:
+        - article
+      operationId: articleSearch
+      requestBody:
+        description: Request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleSearchRequest'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleSearchResponse'
+
+  /article/comment:
+    post:
+      tags:
+        - article
+      operationId: articleComment
+      requestBody:
+        description: comment for article
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleCommentRequest'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleCommentResponse'
+
+components:
+  schemas:
+    RequestType:
+      description: Поле-дескриминатор для вычисления типа запроса
+      enum:
+        - create
+        - read
+        - update
+        - block
+        - search
+
+    IRequest:
+      type: object
+      description: Базовый интерфейс для всех запросов
+      properties:
+        requestType:
+          type: string
+          description: Идентификатор типа запроса
+        requestId:
+          type: string
+          description: Идентификатор запроса для отладки
+      discriminator:
+        propertyName: requestType
+        mapping:
+          create: '#/components/schemas/ArticleCreateRequest'
+          read: '#/components/schemas/ArticleReadRequest'
+          update: '#/components/schemas/ArticleUpdateRequest'
+          block: '#/components/schemas/ArticleBlockRequest'
+          search: '#/components/schemas/ArticleSearchRequest'
+
+    IResponse:
+      type: object
+      description: Базовый интерфейс для всех ответов
+      properties:
+        responseType:
+          $ref: '#/components/schemas/RequestType'
+        requestId:
+          type: string
+          description: Идентификатор запроса для отладки
+        result:
+          $ref: '#/components/schemas/ResponseResult'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleError'
+      discriminator:
+        propertyName: responseType
+        mapping:
+          create: '#/components/schemas/ArticleCreateResponse'
+          read: '#/components/schemas/ArticleReadResponse'
+          update: '#/components/schemas/ArticleUpdateResponse'
+          delete: '#/components/schemas/ArticleBlockResponse'
+          search: '#/components/schemas/ArticleSearchResponse'
+          init: '#/components/schemas/ArticleInitResponse'
+
+    ArticleError:
+      type: object
+      properties:
+        code:
+          type: string
+        group:
+          type: string
+        field:
+          type: string
+        message:
+          type: string
+
+    ResponseResult:
+      type: string
+      enum:
+        - success
+        - error
+
+    BaseArticle:
+      type: object
+      description: Объект описывает свойства, одинаковые для create и update
+      properties:
+        title:
+          type: string
+          description: Заголовок статьи
+        visibility:
+          $ref: '#/components/schemas/ArticleVisibility'
+        content:
+          type: string
+          description: Контент статьи
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleComment'
+
+    ArticleVisibility:
+      type: string
+      description: 'Тип видимости Статьи. Возможные значения: видит только владелец, только зарегистрированный в системе пользователь, видимо всем'
+      enum:
+        - ownerOnly
+        - registeredOnly
+        - public
+
+    ArticleId:
+      type: string
+      nullable: false
+      description: Идентификатор статьи
+
+    CommentId:
+      type: string
+      nullable: false
+      description: Идентификатор коментария
+
+    ArticleAuthorId:
+      type: string
+      description: Идентификатор автора статьи/комментария
+
+    ArticleComment:
+      type: object
+      properties:
+        commentId:
+          $ref: '#/components/schemas/CommentId'
+        articleId:
+          $ref: '#/components/schemas/ArticleId'
+        authorId:
+          $ref: '#/components/schemas/ArticleAuthorId'
+        comment:
+          type: string
+          nullable: false
+          description: 'Комментарий к статье'
+
+
+    ArticleCreateRequest:
+      type: object
+      description: Обьект описывает свойства необходимые для создания статьи
+      allOf:
+        - $ref: '#/components/schemas/IRequest'
+        - $ref: '#/components/schemas/ArticleRequestDebug'
+        - type: object
+          properties:
+            article:
+              $ref: '#/components/schemas/ArticleCreateObject'
+
+    ArticleCommentRequest:
+      type: object
+      description: Обьект описывает комментарий к статье
+      allOf:
+        - $ref: '#/components/schemas/IRequest'
+        - $ref: '#/components/schemas/ArticleRequestDebug'
+        - type: object
+          properties:
+            article:
+              $ref: '#/components/schemas/ArticleComment'
+
+
+    ArticleCreateObject:
+      allOf:
+        - $ref: '#/components/schemas/BaseArticle'
+
+    ArticleReadRequest:
+      allOf:
+        - $ref: '#/components/schemas/IRequest'
+        - $ref: '#/components/schemas/ArticleRequestDebug'
+        - type: object
+          properties:
+            article:
+              $ref: '#/components/schemas/ArticleReadObject'
+
+    ArticleReadObject:
+      allOf:
+        - type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/ArticleId'
+
+    ArticleUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/IRequest'
+        - $ref: '#/components/schemas/ArticleRequestDebug'
+        - type: object
+          properties:
+            article:
+              $ref: '#/components/schemas/ArticleUpdateObject'
+
+    ArticleUpdateObject:
+      allOf:
+        - $ref: '#/components/schemas/BaseArticle'
+        - type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/ArticleId'
+
+    ArticleBlockObject:
+      allOf:
+        - type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/ArticleId'
+
+    ArticleBlockRequest:
+      allOf:
+        - $ref: '#/components/schemas/IRequest'
+        - $ref: '#/components/schemas/ArticleRequestDebug'
+        - type: object
+          properties:
+            article:
+              $ref: '#/components/schemas/ArticleBlockObject'
+
+    ArticleSearchFilter:
+      type: object
+      description: Набор фильтров для поиска
+      properties:
+        searchString:
+          type: string
+          description: Поисковая строка, которая будет искаться в объявлениях
+
+    ArticleSearchRequest:
+      allOf:
+        - $ref: '#/components/schemas/IRequest'
+        - $ref: '#/components/schemas/ArticleRequestDebug'
+        - type: object
+          properties:
+            articleFilter:
+              $ref: '#/components/schemas/ArticleSearchFilter'
+
+    ArticleCreateResponse:
+      allOf:
+        - $ref: '#/components/schemas/IResponse'
+        - $ref: '#/components/schemas/ArticleResponseSingle'
+
+    ArticleResponseSingle:
+      allOf:
+        - type: object
+          description: Ответ с одним объектом(статья)
+          properties:
+            article:
+              $ref: '#/components/schemas/ArticleResponseObject'
+
+    ArticleResponseMulti:
+      allOf:
+        - type: object
+          description: Список найденных объектов
+          properties:
+            articles:
+              type: array
+              items:
+                $ref: '#/components/schemas/ArticleResponseObject'
+
+    ArticleResponseObject:
+      allOf:
+        - $ref: '#/components/schemas/BaseArticle'
+        - type: object
+          description: Объект, который возвращается в ответе бэкенда
+          properties:
+            id:
+              $ref: '#/components/schemas/ArticleId'
+            ownerId:
+              $ref: '#/components/schemas/ArticleAuthorId'
+
+    ArticleReadResponse:
+      allOf:
+        - $ref: '#/components/schemas/IResponse'
+        - $ref: '#/components/schemas/ArticleResponseSingle'
+
+    ArticleUpdateResponse:
+      allOf:
+        - $ref: '#/components/schemas/IResponse'
+        - $ref: '#/components/schemas/ArticleResponseSingle'
+
+    ArticleBlockResponse:
+      allOf:
+        - $ref: '#/components/schemas/IResponse'
+        - $ref: '#/components/schemas/ArticleResponseSingle'
+
+    ArticleCommentResponse:
+      allOf:
+        - $ref: '#/components/schemas/IResponse'
+        - $ref: '#/components/schemas/ArticleResponseSingle'
+
+    ArticleSearchResponse:
+      allOf:
+        - $ref: '#/components/schemas/IResponse'
+        - $ref: '#/components/schemas/ArticleResponseMulti'
+
+    ArticleInitResponse:
+      allOf:
+        - $ref: '#/components/schemas/IResponse'
+
+    ArticleRequestDebugMode:
+      type: string
+      enum:
+        - prod
+        - test
+        - stub
+
+    ArticleRequestDebug:
+      type: object
+      properties:
+        debug:
+          $ref: '#/components/schemas/ArticleDebug'
+
+    ArticleDebug:
+      type: object
+      properties:
+        mode:
+          $ref: '#/components/schemas/ArticleRequestDebugMode'
+        stub:
+          $ref: '#/components/schemas/ArticleRequestDebugStubs'
+
+    ArticleRequestDebugStubs:
+      type: string
+      description: Перечисления всех стабов
+      enum:
+        - success
+        - notFound
+        - badId
+        - badTitle
+        - badVisibility
+        - cannotBlock
+        - badSearchString
